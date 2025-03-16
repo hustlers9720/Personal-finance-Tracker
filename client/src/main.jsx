@@ -6,7 +6,7 @@ import Store, { backendUrl } from "./context/Store";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <Store.Provider value={{ backendUrl }}> {/* Provide backend URL */}
+  <Store.Provider value={backendUrl}> {/* Provide backend URL */}
     <BrowserRouter>
       <App />
     </BrowserRouter>
