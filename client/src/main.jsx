@@ -6,7 +6,7 @@ import Store from "./context/Store";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <Store.Provider value="http://localhost:5000"> {/* Provide backend URL */}
+  <Store.Provider value={{ backendUrl }}> {/* Provide backend URL */}
     <BrowserRouter>
       <App />
     </BrowserRouter>
