@@ -3,7 +3,7 @@ import Transaction from "../models/transactionModel.js";
 // Add a new transaction
 const addTransaction = async (req, res) => {
     try {
-        const { amount, date, description } = req.body;
+        const { amount, date, description, category } = req.body;
 
         // Basic validation
         if (!amount || amount <= 0) {
@@ -15,9 +15,12 @@ const addTransaction = async (req, res) => {
         if (!description.trim()) {
             return res.status(400).json({ error: "Description cannot be empty" });
         }
+        if (!category || !["Food", "Transport", "Shopping", "Entertainment", "Others"].includes(category)) {
+            return res.status(400).json({ error: "Invalid category" });
+        }
 
         // Create a new transaction
-        const transaction = new Transaction({ amount, date, description });
+        const transaction = new Transaction({ amount, date, description, category });
 
         // Save to MongoDB
         await transaction.save();
@@ -29,19 +32,21 @@ const addTransaction = async (req, res) => {
     }
 };
 
+
 // Update an existing transaction
 const updateTransaction = async (req, res) => {
     try {
         const { id } = req.params;
-        const { amount, date, description } = req.body;
+        const { amount, date, description, category } = req.body;
 
         // Validate if at least one valid field is provided
         if (
             (amount !== undefined && amount <= 0) ||
             (description !== undefined && description.trim() === "") ||
-            (amount === undefined && date === undefined && description === undefined)
+            (category !== undefined && !["Food", "Transport", "Shopping", "Entertainment", "Others"].includes(category)) ||
+            (amount === undefined && date === undefined && description === undefined && category === undefined)
         ) {
-            return res.status(400).json({ error: "Provide a valid amount, date, or description for update" });
+            return res.status(400).json({ error: "Provide a valid amount, date, description, or category for update" });
         }
 
         // Create an object with only the provided fields
@@ -49,6 +54,7 @@ const updateTransaction = async (req, res) => {
         if (amount !== undefined) updateFields.amount = amount;
         if (date !== undefined) updateFields.date = date;
         if (description !== undefined) updateFields.description = description;
+        if (category !== undefined) updateFields.category = category;
 
         const transaction = await Transaction.findByIdAndUpdate(id, updateFields, { new: true });
 
@@ -62,7 +68,6 @@ const updateTransaction = async (req, res) => {
         return res.status(500).json({ error: "Server error" });
     }
 };
-
 
 // Get all transactions
 const readTransaction = async (req, res) => {
@@ -98,34 +103,52 @@ const monthlySummary = async (req, res) => {
     try {
         const transactions = await Transaction.find({});
 
-        // Grouping transactions by month
+        // Grouping transactions by month and category
         const monthlyData = {};
+        const overallCategoryBreakdown = {}; // Track overall category-wise expenses
+        let totalExpenses = 0; // Sum of all expenses
 
-        transactions.forEach(({ amount, date }) => {
+        transactions.forEach(({ amount, date, category }) => {
             const month = new Date(date).toLocaleString("en-US", { month: "short" });
 
             if (!monthlyData[month]) {
-                monthlyData[month] = { month, income: 0, expenses: 0 };
+                monthlyData[month] = { month, income: 0, expenses: 0, categoryBreakdown: {} };
             }
 
             if (amount >= 0) {
-                monthlyData[month].expenses += amount;  // Assuming all are expenses (modify if needed)
+                monthlyData[month].expenses += amount;
+                totalExpenses += amount; // Add to total expenses
+
+                // Monthly category-wise breakdown
+                if (!monthlyData[month].categoryBreakdown[category]) {
+                    monthlyData[month].categoryBreakdown[category] = 0;
+                }
+                monthlyData[month].categoryBreakdown[category] += amount;
+
+                // Overall category-wise breakdown
+                if (!overallCategoryBreakdown[category]) {
+                    overallCategoryBreakdown[category] = 0;
+                }
+                overallCategoryBreakdown[category] += amount;
             } else {
-                monthlyData[month].income += Math.abs(amount);  // Handle income separately if needed
+                monthlyData[month].income += Math.abs(amount);
             }
         });
 
         // Convert object to array for frontend
-        const formattedData = Object.values(monthlyData).sort((a, b) => 
+        const formattedMonthlyData = Object.values(monthlyData).sort((a, b) =>
             new Date(`2024-${a.month}-01`) - new Date(`2024-${b.month}-01`)
         );
 
-        res.json(formattedData);
+        res.json({
+            monthlySummary: formattedMonthlyData,
+            categoryBreakdown: overallCategoryBreakdown, // Overall category breakdown for Pie Chart
+            totalExpenses, // Total sum of all expenses
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
-
-}
+};
 
 export { addTransaction, updateTransaction, readTransaction, deleteTransaction, monthlySummary };

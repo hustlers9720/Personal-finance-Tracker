@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from 'dotenv';
 import connectDB from './config/db.js';
 import router from './routes/transactionRoute.js';
+import budgetRouter from './routes/budgetsRoute.js';
 
 config(); // Load environment variables
 
@@ -16,6 +17,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/transaction', router);
+app.use('/budget', budgetRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

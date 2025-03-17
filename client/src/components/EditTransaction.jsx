@@ -3,17 +3,20 @@ import axios from "axios";
 import React from "react";
 import { backendUrl, useBackend } from "../context/Store";
 
+const categories = ["Food", "Transport", "Shopping", "Entertainment", "Others"]; // Fixed category options
 
 const EditTransaction = ({ transaction, onUpdate, onCancel }) => {
   const [formData, setFormData] = useState({
     amount: transaction.amount || "",
     date: transaction.date ? transaction.date.split("T")[0] : "", // Convert to YYYY-MM-DD
     description: transaction.description || "",
+    category: transaction.category || categories[0], // Default to the first category if empty
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const backend = useBackend();
+
   // Handle form input change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,7 +28,7 @@ const EditTransaction = ({ transaction, onUpdate, onCancel }) => {
     setLoading(true);
     setError("");
 
-    if (!formData.amount || !formData.date || !formData.description) {
+    if (!formData.amount || !formData.date || !formData.description || !formData.category) {
       setError("All fields are required.");
       setLoading(false);
       return;
@@ -82,6 +85,23 @@ const EditTransaction = ({ transaction, onUpdate, onCancel }) => {
             className="border p-2 w-full"
             required
           />
+        </div>
+
+        <div className="mb-2">
+          <label className="block">Category:</label>
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="border p-2 w-full"
+            required
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex gap-2">

@@ -3,22 +3,27 @@ import axios from "axios";
 import React from "react";
 import { backendUrl, useBackend } from "../context/Store";
 
+const categories = [
+  "Food", "Transport", "Shopping", "Entertainment", "Others"
+];
+
 const AddTransaction = () => {
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState(categories[0]); // Default category
 
   const backend = useBackend();
-  // console.log(backend); //
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${backend}/transaction/add`, { amount, date, description });
+      await axios.post(`${backend}/transaction/add`, { amount, date, description, category });
       alert("Transaction Added!");
       setAmount("");
       setDate("");
       setDescription("");
+      setCategory(categories[0]); // Reset to default category
     } catch (error) {
       console.error(error);
     }
@@ -35,15 +40,25 @@ const AddTransaction = () => {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           required
-          className="border p-2 rounded w-1/2 bg-gray-800 text-white focus:ring-2 focus:ring-green-500"
+          className="border p-2 rounded w-1/3 bg-gray-800 text-white focus:ring-2 focus:ring-green-500"
         />
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           required
-          className="border p-2 rounded w-1/2 bg-gray-800 text-white focus:ring-2 focus:ring-green-500"
+          className="border p-2 rounded w-1/3 bg-gray-800 text-white focus:ring-2 focus:ring-green-500"
         />
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          required
+          className="border p-2 rounded w-1/3 bg-gray-800 text-white focus:ring-2 focus:ring-green-500"
+        >
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
       </div>
 
       <textarea
